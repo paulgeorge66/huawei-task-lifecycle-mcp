@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars
+wrangler.jsonc
+**/.env
+!**/.env.example
+dist/
+*.zip
+**/__pycache__/
+*.py[cod]
+.DS_Store
+*.log

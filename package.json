@@ -1,0 +1,39 @@
+{
+  "name": "huawei-task-lifecycle-mcp",
+  "version": "3.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "format": "oxfmt --write .",
+    "lint": "oxlint --deny-warnings",
+    "type-check": "tsc --noEmit",
+    "cf-typegen": "wrangler types --config wrangler.example.jsonc",
+    "test:codex-title": "python3 scripts/test_codex_notify_title.py",
+    "test:contracts": "node scripts/test_worker_contracts.mjs && python3 scripts/test_python_clients.py",
+    "test:workers": "vitest run",
+    "test:workers-types": "tsc -p test/tsconfig.json --noEmit",
+    "package:skills": "python3 scripts/build_packages.py",
+    "deploy:dry-run": "wrangler deploy --dry-run --config wrangler.example.jsonc --outdir .wrangler/dry-run",
+    "release:verify": "npm run package:skills && python3 scripts/verify_release.py && npm run deploy:dry-run",
+    "audit:history": "python3 scripts/audit_git_history.py",
+    "check": "npm run type-check && npm run test:workers-types && npm run lint && npm run test:codex-title && npm run test:contracts && npm run test:workers && npm run package:skills"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "0.10.3",
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.22.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.1.8",
+    "@types/node": "26.4.0",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.131.1"
+  }
+}

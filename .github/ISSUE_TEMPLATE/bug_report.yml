@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible problem without sharing private deployment data
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, OAuth codes, Agent Tokens, real task content, production URLs, account/database IDs, local paths, or phone screenshots containing private data.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: Describe the observable behavior using placeholders and redacted examples.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: List the smallest safe steps that reproduce the problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Integration mode
+      options:
+        - MCP + Hook
+        - MCP + Skill
+        - Skill + Webhook
+        - Server / deployment
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "3.0.0 or commit SHA"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Include status codes or non-sensitive logs only after removing identifiers and content.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed secrets, personal data, production identifiers, task content, and private URLs.
+          required: true

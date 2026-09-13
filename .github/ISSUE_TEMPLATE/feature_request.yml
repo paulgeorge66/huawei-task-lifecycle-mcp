@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a scoped improvement without including private data
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the use case with placeholders. Do not include production URLs, credentials, account IDs, task content, or personal information.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case
+      description: What outcome is difficult with the current behavior?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired observable behavior and its privacy or compatibility impact.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - MCP
+        - Codex Hook
+        - Webhook Skill
+        - Worker and delivery
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I used placeholders and removed secrets, personal data, and production identifiers.
+          required: true

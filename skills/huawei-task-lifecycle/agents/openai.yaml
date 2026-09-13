@@ -1,0 +1,6 @@
+interface:
+  display_name: "Huawei Task Lifecycle"
+  short_description: "Report complete task runs to one Huawei Today card"
+  default_prompt: "Use $huawei-task-lifecycle to report this task run from start through waiting or progress to one terminal state."
+policy:
+  allow_implicit_invocation: true

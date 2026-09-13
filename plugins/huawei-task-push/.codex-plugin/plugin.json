@@ -1,0 +1,23 @@
+{
+  "name": "huawei-task-push",
+  "version": "3.0.0",
+  "description": "Report task lifecycle and user-visible output to Huawei Today without MCP.",
+  "author": {
+    "name": "Huawei Task Lifecycle contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Huawei Task Push",
+    "shortDescription": "Push one Huawei card per agent task without MCP.",
+    "longDescription": "Uses a reliable bundled HTTP client and private long-lived Agent credential to report start, progress, waiting, completion, failure, cancellation, renaming, and user-visible output to Huawei Today.",
+    "developerName": "Huawei Task Lifecycle contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Task lifecycle notifications",
+      "Huawei Today card updates",
+      "Local retry outbox",
+      "Delivery status and diagnostics"
+    ],
+    "defaultPrompt": "Use Huawei Task Push to report this task lifecycle and final output."
+  }
+}

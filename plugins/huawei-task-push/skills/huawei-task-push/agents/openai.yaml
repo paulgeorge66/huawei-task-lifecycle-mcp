@@ -1,0 +1,6 @@
+interface:
+  display_name: "Huawei Task Push"
+  short_description: "Reliably update one Huawei Today card per task"
+  default_prompt: "Use $huawei-task-push to report this task run reliably and include its final user-visible output."
+policy:
+  allow_implicit_invocation: true
