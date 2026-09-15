@@ -23,6 +23,7 @@ import {
 import {
   getAgentDeliveryMode,
   getShadowEventIdentity,
+  hasAppliedSemanticTaskEvent,
   touchCredential,
   retryV3EventDelivery,
   v3EventTypeForState,
@@ -177,6 +178,7 @@ export async function submitTaskEvent(
   const normalizedContent = normalizeEscapedContent(input.content) || fallbackContent;
   const fullContent = agent.includeFullContent ? normalizedContent : fallbackContent;
   const content = fullContent.slice(0, agent.maxContentLength);
+  const shadowEventType = options.shadowEventType ?? v3EventTypeForState(input.state);
   const fingerprint = await sha256Hex(
     JSON.stringify([
       agent.id,
@@ -196,6 +198,13 @@ export async function submitTaskEvent(
     bypassNotificationPolicy,
     options.notificationPolicyOverride,
   );
+  if (
+    !suppressionReason &&
+    shadowEventType === "turn.completed" &&
+    !(await hasAppliedSemanticTaskEvent(env.DB, agent.id, input.task_id))
+  ) {
+    suppressionReason = "hook_without_semantic_task";
+  }
   if (
     !suppressionReason &&
     !bypassNotificationPolicy &&
@@ -228,7 +237,6 @@ export async function submitTaskEvent(
   const cardId = await cardIdFor(agent.id, input.task_id);
   const externalRunId = input.run_id ?? "legacy";
   const runId = `run:${(await sha256Hex(`${cardId}\0${externalRunId}`)).slice(0, 48)}`;
-  const shadowEventType = options.shadowEventType ?? v3EventTypeForState(input.state);
   const traceId = options.traceId ?? crypto.randomUUID();
   try {
     await createEvent(

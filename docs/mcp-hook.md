@@ -1,6 +1,6 @@
 # MCP + Hook：Codex 推荐方案
 
-该模式用 MCP 提交语义生命周期，并用 Codex `notify` 记录宿主的本轮结束事实。Hook 不知道任务是否成功，因此兼容投影会保留同一任务已有的 `started`、`progress`、`failed`、`canceled` 或 `completed` 状态，不再用“本轮结束”覆盖失败或取消。v3 会把 Hook 独立记录为 `turn.completed`：它可以更新可见正文，但不会凭空把语义任务改为完成。每个 Agent 只选择旧链路或 v3 其中之一。
+该模式用 MCP 提交语义生命周期，并用 Codex `notify` 记录宿主的本轮结束事实。Hook 不知道任务是否成功，因此兼容投影会保留同一任务已有的 `started`、`progress`、`failed`、`canceled` 或 `completed` 状态，不再用“本轮结束”覆盖失败或取消。v3 会把 Hook 独立记录为 `turn.completed`：它可以更新已由 MCP 登记任务的可见正文，但不会凭空把语义任务改为完成。若某个 `task_id` 从未提交过语义生命周期、只出现 Hook，服务端会以 `hook_without_semantic_task` 记录并抑制投递，避免后台或临时 Codex 会话自行建卡。每个 Agent 只选择旧链路或 v3 其中之一。
 
 ## 1. 连接 MCP
 
@@ -41,10 +41,10 @@ notify = ["python3", "/absolute/path/to/clients/codex_notify.py"]
 
 若已有 Computer Use 通知器，改用 `clients/codex_notify_mux.py`。该脚本会先调用已有通知器，再发送华为完成事件。
 
-Hook 会在网络请求前把原始完成事件写入权限为 `600` 的本地 `codex-outbox`。每次后续 Hook 会先按时间顺序补发旧事件；服务端用 thread + turn 派生稳定事件 ID，因此未知结果重试不会产生第二个生命周期事件。Hook 仍保持退出码 0，不因通知故障破坏 Codex 的主任务。
+Hook 会在网络请求前把原始完成事件写入权限为 `600` 的本地 `codex-outbox`。每次后续 Hook 会先按时间顺序补发旧事件；服务端用 thread + turn 派生稳定事件 ID，因此未知结果重试不会产生第二个生命周期事件。Hook 仍保持退出码 0，不因通知故障破坏 Codex 的主任务。Hook 不是独立的任务创建入口：必须先由 MCP/事件入口用相同 `task_id` 提交至少一个语义事件。
 
 Codex 当前的 legacy `notify` JSON 不直接包含侧边栏任务标题。客户端会用 `thread-id` 只读查询本机 `$CODEX_HOME/state_5.sqlite`：优先使用 `threads.name` 中已经生成或自定义的任务标题，并仅在旧版数据库没有该字段时回退到 `threads.title`。第一轮标题若稍晚写入，客户端会短暂重试；Worker 对明确上报的 `thread-title` 赋最高优先级，因此也能纠正数据库中已经保存的旧错误标题。
 
 ## 5. 验证
 
-执行一个短任务后，在后台确认 MCP 与 Hook 事件属于同一 Agent，并检查 `task_id`、`delivery_status` 和 v3 对账。两条通道只有在 `task_id` 相同的情况下更新同一张卡。Hook 的 `event_id` 由 Agent、thread 和 turn 稳定生成，同一 turn 重试不会产生重复事件。v3 中应看到 `turn.completed`，并且该事件不会改变语义任务状态。
+执行一个短任务后，在后台确认 MCP 与 Hook 事件属于同一 Agent，并检查 `task_id`、`delivery_status` 和 v3 对账。两条通道只有在 `task_id` 相同的情况下更新同一张卡。Hook 的 `event_id` 由 Agent、thread 和 turn 稳定生成，同一 turn 重试不会产生重复事件。v3 中应看到 `turn.completed`，并且该事件不会改变语义任务状态。另用一个从未提交语义事件的测试 `task_id` 调用 Hook，预期 `delivery_status=suppressed`、`suppression_reason=hook_without_semantic_task`，且手机没有新卡或提醒。
