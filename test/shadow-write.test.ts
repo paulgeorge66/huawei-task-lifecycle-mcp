@@ -253,9 +253,9 @@ describe("v3 shadow writes", () => {
     expect(projection).toEqual({ result: "本轮已结束", content: "Assistant answer" });
   });
 
-  it("records a first-seen turn as observed without inventing task completion", async () => {
+  it("records but never delivers a Hook-only task without a semantic lifecycle", async () => {
     const record = await agent("shadow-turn-only");
-    await submitTaskEvent(
+    const first = await submitTaskEvent(
       env,
       record,
       {
@@ -268,15 +268,46 @@ describe("v3 shadow writes", () => {
       },
       { bypassNotificationPolicy: true, shadowEventType: "turn.completed" },
     );
+    const second = await submitTaskEvent(
+      env,
+      record,
+      {
+        task_id: "turn-only-task",
+        event_id: "turn-only-event-2",
+        state: "completed",
+        title: "Turn only renamed",
+        content: "Another visible answer",
+        force_notify: false,
+      },
+      { bypassNotificationPolicy: true, shadowEventType: "turn.completed" },
+    );
 
     expect(await taskRow(record.id, "turn-only-task")).toMatchObject({
       state: "new",
-      revision: 1,
+      revision: 2,
     });
     expect(await getShadowEventIdentity(env.DB, record.id, "turn-only-event")).toMatchObject({
       disposition: "observed",
       revision: 1,
     });
+    expect(first).toMatchObject({
+      delivery_status: "suppressed",
+      suppression_reason: "hook_without_semantic_task",
+    });
+    expect(second).toMatchObject({
+      delivery_status: "suppressed",
+      suppression_reason: "hook_without_semantic_task",
+    });
+    const counts = await env.DB.prepare(
+      `SELECT
+           (SELECT COUNT(*) FROM card_projections WHERE task_id = task.id) AS projections,
+           (SELECT COUNT(*) FROM outbox WHERE task_id = task.id) AS outboxRows,
+           (SELECT COUNT(*) FROM card_delivery_state WHERE task_id = task.id) AS deliveryStateRows
+         FROM tasks_v3 task WHERE task.agent_id = ? AND task.external_task_id = ?`,
+    )
+      .bind(record.id, "turn-only-task")
+      .first<{ projections: number; outboxRows: number; deliveryStateRows: number }>();
+    expect(counts).toEqual({ projections: 2, outboxRows: 0, deliveryStateRows: 0 });
   });
 
   it("exposes the shadow summary and differences to an authenticated administrator", async () => {

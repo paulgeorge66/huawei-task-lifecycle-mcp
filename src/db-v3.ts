@@ -166,6 +166,30 @@ export async function touchCredential(db: D1Database, secretHash: string): Promi
     .run();
 }
 
+export async function hasAppliedSemanticTaskEvent(
+  db: D1Database,
+  agentId: string,
+  externalTaskId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 AS present
+       FROM events_v3 event
+       JOIN tasks_v3 task ON task.id = event.task_id
+       WHERE task.agent_id = ?
+         AND task.external_task_id = ?
+         AND event.disposition = 'applied'
+         AND event.event_type IN (
+           'task.started', 'task.progress', 'task.waiting',
+           'task.completed', 'task.failed', 'task.canceled'
+         )
+       LIMIT 1`,
+    )
+    .bind(agentId, externalTaskId)
+    .first<{ present: number }>();
+  return row?.present === 1;
+}
+
 export function v3EventTypeForState(state: TaskState): V3EventType {
   return `task.${state}` as V3EventType;
 }
